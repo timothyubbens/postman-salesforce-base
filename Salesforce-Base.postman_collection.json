@@ -1,0 +1,185 @@
+{
+	"info": {
+		"name": "Salesforce Base",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "! Salesforce Auth - Login",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"postman.clearEnvironmentVariable(\"sessionid\")",
+							"postman.clearEnvironmentVariable(\"serverurl\")"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var xmlTree = xml2Json(responseBody);",
+							"postman.setEnvironmentVariable(\"serverurl\", xmlTree['soapenv:Envelope']['soapenv:Body'].loginResponse.result.serverUrl.replace(/\\/Soap.*$/, ''));",
+							"postman.setEnvironmentVariable(\"resturl\", xmlTree['soapenv:Envelope']['soapenv:Body'].loginResponse.result.serverUrl.replace(/\\/Soap.*$/, '') + '/apexrest');",
+							"postman.setEnvironmentVariable(\"sessionId\", xmlTree['soapenv:Envelope']['soapenv:Body'].loginResponse.result.sessionId);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/xml",
+						"type": "text"
+					},
+					{
+						"key": "SOAPAction",
+						"value": "Required",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "<se:Envelope xmlns:se=\"http://schemas.xmlsoap.org/soap/envelope/\">\n\t<se:Header/>\n\t<se:Body>\n\t\t<login xmlns=\"urn:partner.soap.sforce.com\">\n\t\t\t<username>{{username}}</username>\n\t\t\t<password>{{password}}{{token}}</password>\n\t\t</login>\n\t</se:Body>\n</se:Envelope>"
+				},
+				"url": {
+					"raw": "{{baseurl}}/services/Soap/u/40.0",
+					"host": [
+						"{{baseurl}}"
+					],
+					"path": [
+						"services",
+						"Soap",
+						"u",
+						"40.0"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Custom Endpoint",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionId}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{resturl}}/mycustomendpoint",
+					"host": [
+						"{{resturl}}"
+					],
+					"path": [
+						"mycustomendpoint"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Limits",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Fail if close to limit: DailyApiRequests\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.DailyApiRequests.Remaining).to.be.above(5000);",
+							"});",
+							"",
+							"pm.test(\"Fail if close to limit: DailyStandardVolumePlatformEvents\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.DailyStandardVolumePlatformEvents.Remaining).to.be.above(5000);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionId}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{serverurl}}/data/v45.0/limits/",
+					"host": [
+						"{{serverurl}}"
+					],
+					"path": [
+						"data",
+						"v45.0",
+						"limits",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Account Object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "Bearer {{sessionId}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{serverurl}}/data/v45.0/sobjects/Account/",
+					"host": [
+						"{{serverurl}}"
+					],
+					"path": [
+						"data",
+						"v45.0",
+						"sobjects",
+						"Account",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
